@@ -1,0 +1,39 @@
+NEXT IDEA:
+ Some big battle. You join one side. Perhaps Alex is there, too?
+
+What if you are imprisoned and others free you and arm you, such that you can join the
+uprising?
+
+Or what if Alex and others plan an attack on the raiders? Alex can vouch for you. You
+join them. During the battle, those killed respawn off-camera. The battle continues until you make it to the raiders' leader and slay him, or until you leave
+
+Also, things should happen besides fighting?
+
+What if YOU are the one sent to get medicine?
+
+Large stones
+
+SPECIFIC INCIDENTS:
+  Find the item someone left behind in the ruined city (which is occupied by monsters)
+  Rescue someone's child, lost somewhere
+  Sneak around in some place, possibly to assassinate someone
+
+*to determine if a guard can see you, use line-of-sight.
+To determine line-of-sight, use an area with only rectangular obstructions,
+and PRECALCULATE!
+
+temple? temple with courtyard and fountain? What if you are followed there by the woman
+whose brother you killed?
+
+Find a medicinal herb?
+
+NEWER IDEA:
+
+Have pre-designed "quests," but their location and geography are randomized.
+  Slay the monster occupying an area (initial tutorial quest) (done)
+  Find an item someone dropped and return it to them (possibly in the abandoned city?)
+  A place is attacked. Escape alive. Fight or not; just survive
+  Teamed with others, reclaim an area occupied by invaders
+  Sneak in and do something without being caught
+
+You should have to find something
