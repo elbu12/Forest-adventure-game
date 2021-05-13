@@ -363,7 +363,7 @@ public class Game implements ActionListener, KeyListener{
     new DialogButton("Different text"){public void press(){doSomethingElse();}}
     );
 
-  Obviously, this is a prime opportunity of lambda expressions
+  Obviously, this is a prime opportunity for lambda expressions
   **/
   public static void getResponse(String message, DialogButton... options){
     getResponses(message, options);
@@ -4182,5 +4182,8 @@ public class Game implements ActionListener, KeyListener{
     graphics.drawRenderedImage(compass0, imageMover);
     //the paintComponent method, called by repaint, should draw visibleImage
     panel.repaint();
+  }
+  public static void main(String[] args){
+    BeginGame.main(args);
   }
 }
