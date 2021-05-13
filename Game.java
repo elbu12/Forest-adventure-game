@@ -1710,7 +1710,6 @@ public class Game implements ActionListener, KeyListener{
 
     for (int pathFindingIterations = 0; unevaluated.size() > 0 && pathFindingIterations < s.pathFindingIterations;
          pathFindingIterations++){
-//THIS IS THE AREA TO REWRITE
       //Get the node from unevaluated with least distanceThrough
       //call this node "current"
       //"Pop" it to remove it. As we will now evaluate it, it is no longer unevaluated
