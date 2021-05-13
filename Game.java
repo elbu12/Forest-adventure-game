@@ -362,6 +362,8 @@ public class Game implements ActionListener, KeyListener{
     new DialogButton("Button text"){public void press(){doSomething();}},
     new DialogButton("Different text"){public void press(){doSomethingElse();}}
     );
+
+  Obviously, this is a prime opportunity of lambda expressions
   **/
   public static void getResponse(String message, DialogButton... options){
     getResponses(message, options);
@@ -1404,7 +1406,20 @@ public class Game implements ActionListener, KeyListener{
     return getIntersectingObstacle(s, x0, y0, dx, dy, false);
   }
   
-  //PATHFINDING BEGINS HERE!
+  /**PATHFINDING BEGINS HERE!
+  Node objects have been replaced with arrays to avoid calling the Garbage Collector.
+  Each node is associated with an index number, which represents its place among the arrays.
+  Each array contains the values of a single attribute for all nodes.
+  eg, nodex.get(5) is the x-value of node #5
+
+  Because the loop always wants to get the node with the least "distanceThrough," unevaluated
+  is a heap, ordered by distanceThrough.
+
+  This structure is defined below the other arrays.
+
+  Note that evaluated and unevaluated are lists of nodes, therefore they are actually lists of
+  INDEX NUMBERS.
+  **/
   static EditableDoubleArray nodex = new EditableDoubleArray(200); //node x values
   static EditableDoubleArray nodey = new EditableDoubleArray(200); //node y values
   static EditableDoubleArray distanceTo = new EditableDoubleArray(200); //distance from start to a node
@@ -1413,11 +1428,122 @@ public class Game implements ActionListener, KeyListener{
                                                                             //to destination
   static EditableIntArray parent = new EditableIntArray(200); //node's parent node
 
-  static EditableIntArray unevaluated = new EditableIntArray(200); //nodes connected to evaluated nodes
-  static EditableIntArray evaluated = new EditableIntArray(200);   //nodes whose neighbors have veen determined
+  static EditableIntArray evaluated = new EditableIntArray(200);   //nodes whose neighbors have been determined
   static EditableIntArray[][] tileNodes = new EditableIntArray[worldWidth][worldHeight]; //nodes, grouped by tiles
   static EditableIntArray neighbors = new EditableIntArray(40);   //nodes connected to the currently evaluated node
+
+  static class HeapOrderedByDistanceThrough{
+    //This is what it sounds like: A heap, sorted by distanceThrough.
+    //It is used to always get the node with the least distanceThrough.
+    ArrayList <Integer> array;
+    public HeapOrderedByDistanceThrough(int length){
+      array = new ArrayList <Integer> (length);
+    }
+    private double getValue(int i){
+      //Note that "i" is the index number in "array"
+      //array[i] is the index number for a node in the other arrays
+      //"i" is the index number of an index number
+      return distanceThrough.get(array.get(i));
+    }
+    private void siftUp(int i){
+      //potentially swaps an element with its parents
+      if (i==0){
+        return; //top element has no parent
+      }
+      int parenti = (i-1)/2;
+      double value = getValue(i);
+      double parentValue = getValue(parenti);
+      if (value < parentValue){
+        //swap them
+        int geti = array.get(i);
+        array.set(i, array.get(parenti));
+        array.set(parenti, geti);
+        //call again on the new parent
+        siftUp(parenti);
+      }
+    }
+    private void siftDown(int i){
+      //potentially swaps an element with its child
+      int childi = (i*2) + 1;
+      if (childi >= array.size()){
+        //element has no children; abort
+        return;
+      }
+      double value = getValue(i);
+      double childValue = getValue(childi);
+      if (childi+1 < array.size()){
+        //also consider second child
+        double child2Value = getValue(childi+1);
+        if (child2Value < childValue){
+          //use child2 instead
+          childi++;
+          childValue = child2Value;
+        }
+      }
+      //should child swap with parent?
+      if (childValue < value){
+        //yes; swap
+        int geti = array.get(i);
+        array.set(i, array.get(childi));
+        array.set(childi, geti);
+        //call again on new child
+        siftDown(childi);
+      }
+    }
+    public void clear(){
+      array.clear();
+    }
+    public int size(){
+      return array.size();
+    }
+    //public heap methods
+    public void push(int i){
+      array.add(i);
+      siftUp(array.size()-1);
+    }
+    public int pop(){
+      int top = array.get(0);  //top (least) element
+      if (array.size() > 1){
+        array.set(0, array.remove(array.size()-1));  //replace with last element
+        siftDown(0);  //sift down to re-heapify
+      }
+      else {
+        array.clear();
+      }
+      return top;
+    }
+    public boolean contains(int node){
+      //check if this contains "node"
+      //as this is partially ordered, we don't need to iterate through the entire array
+      return (array.isEmpty() ? false : contains(node, 0));
+    }
+    private boolean contains(int node, int index){
+      //checks if the heap contains "node," but only looking at "index" and its children
+      if (array.get(index) == node){
+        //found it!
+        return true;
+      }
+      //If we made it this far, node "index" is not it. Try children.
+      if (distanceThrough.get(node) < getValue(index)){
+        //node at "index" is too high, and everything after it is even higher. Abort.
+        return false;
+      }
+      if ((index * 2) + 1 < array.size() && contains(node, (index * 2) + 1)){
+        //found it in the first child branch
+        return true;
+      }
+      if ((index * 2) + 2 < array.size() && contains(node, (index * 2) + 2)){
+        //found it in the second child branch
+        return true;
+      }
+      //neither branch has it.
+      return false;
+    }
+  }
   
+  static HeapOrderedByDistanceThrough unevaluated = new HeapOrderedByDistanceThrough(200); //nodes connected to evaluated nodes
+
+
   //createNode creates a node at (x,y), adding it to the appropriate arrays.
   //Its return value is the node's index number, to be added to another array
   public static int createNode(double x, double y, double destinationx, double destinationy){
@@ -1580,28 +1706,20 @@ public class Game implements ActionListener, KeyListener{
     distanceFrom.add(distanceBetween(x0, y0, x1, y1));
     distanceThrough.add(distanceBetween(x0, y0, x1, y1));
     parent.add(0);
-    unevaluated.add(0);
+    unevaluated.push(0);
 
     for (int pathFindingIterations = 0; unevaluated.size() > 0 && pathFindingIterations < s.pathFindingIterations;
          pathFindingIterations++){
-      //iterate through "unevaluated" to find node with least distanceThrough
+//THIS IS THE AREA TO REWRITE
+      //Get the node from unevaluated with least distanceThrough
       //call this node "current"
-      int current = unevaluated.get(0);
-      int currentIndexNumber = 0;
-      for (int i=1; i<unevaluated.size(); i++){
-        if (distanceThrough.get(unevaluated.get(i)) < distanceThrough.get(current)){
-          //found a node with lesser distanceThrough; save it
-          current = unevaluated.get(i);
-          currentIndexNumber = i;
-        }
-      }
+      //"Pop" it to remove it. As we will now evaluate it, it is no longer unevaluated
+      int current = unevaluated.pop();
       //if current is the destination, reconstruct path (and optimize)
       if (nodex.get(current) == x1 && nodey.get(current) == y1){
         //Found the destination node! Reconstruct the path and optimize
         return optimizePath(s, current);
       }
-      //remove current from "unevaluated," because we are now evaluating it
-      unevaluated.remove(currentIndexNumber);
       if (narration){
         tiles[(int)(nodex.get(current))][(int)(nodey.get(current))].drawBrown=true;
       }
@@ -1667,7 +1785,7 @@ public class Game implements ActionListener, KeyListener{
           distanceThrough.set(neighbor, distanceTo.get(neighbor) + distanceFrom.get(neighbor));
           //if neighbor is not in unevaluated, add it
           if (!unevaluated.contains(neighbor)){
-            unevaluated.add(neighbor);
+            unevaluated.push(neighbor);
           }
         }
       }
@@ -1732,18 +1850,10 @@ public class Game implements ActionListener, KeyListener{
     if (x < 0 || y < 0 || x >= worldWidth || y >= worldHeight){
       return false;
     }
-//THE FOLLOWING LINE IS WHAT CAUSES THE ERROR! HOW DID TILES GET DE-INITIALIZED?
-//PENIS
-
-try {
     if (s.walks && !tiles[(int) (x)][(int) (y)].walkable){
       return false;
     }
 
-}
-catch (Exception e){
-
-}
 
     intersectingTiles = getIntersectingTiles(s, x, y);
     relevantSolids.clear();
