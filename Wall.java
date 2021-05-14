@@ -18,7 +18,7 @@ public class Wall extends Solid{
   /**
   This method makes a wall spanning from (x0,y0) to (x0+dx,y0+dx)
   Note that [(dx == 0) || (dy == 0)]
-  A horizontal wall with have width exactly equal to dx, but height of "thickness,"
+  A horizontal wall will have width exactly equal to dx, but height of "thickness,"
   and will be vertically centered on y
   If "door" is >0, it will place a doorway with width "door" in the middle of the wall
   **/
