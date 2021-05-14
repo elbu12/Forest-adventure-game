@@ -1436,6 +1436,7 @@ public class Game implements ActionListener, KeyListener{
     //This is what it sounds like: A heap, sorted by distanceThrough.
     //It is used to always get the node with the least distanceThrough.
     ArrayList <Integer> array;
+    HashSet <Integer> set = new HashSet <Integer> (); //for the "contains" method
     public HeapOrderedByDistanceThrough(int length){
       array = new ArrayList <Integer> (length);
     }
@@ -1492,6 +1493,7 @@ public class Game implements ActionListener, KeyListener{
     }
     public void clear(){
       array.clear();
+      set.clear();
     }
     public int size(){
       return array.size();
@@ -1499,6 +1501,7 @@ public class Game implements ActionListener, KeyListener{
     //public heap methods
     public void push(int i){
       array.add(i);
+      set.add(i);
       siftUp(array.size()-1);
     }
     public int pop(){
@@ -1510,34 +1513,12 @@ public class Game implements ActionListener, KeyListener{
       else {
         array.clear();
       }
+      set.remove(top);
       return top;
     }
     public boolean contains(int node){
-      //check if this contains "node"
-      //as this is partially ordered, we don't need to iterate through the entire array
-      return (array.isEmpty() ? false : contains(node, 0));
-    }
-    private boolean contains(int node, int index){
-      //checks if the heap contains "node," but only looking at "index" and its children
-      if (array.get(index) == node){
-        //found it!
-        return true;
-      }
-      //If we made it this far, node "index" is not it. Try children.
-      if (distanceThrough.get(node) < getValue(index)){
-        //node at "index" is too high, and everything after it is even higher. Abort.
-        return false;
-      }
-      if ((index * 2) + 1 < array.size() && contains(node, (index * 2) + 1)){
-        //found it in the first child branch
-        return true;
-      }
-      if ((index * 2) + 2 < array.size() && contains(node, (index * 2) + 2)){
-        //found it in the second child branch
-        return true;
-      }
-      //neither branch has it.
-      return false;
+      //This is why we have the set!
+      return set.contains(node);
     }
   }
   
