@@ -3578,6 +3578,7 @@ public class Game implements ActionListener, KeyListener{
             if (haveSword){
               getResponse("'Sure. Let's spar. Back up to draw me in, see how I attack, then counter.'");
               intention = MOVE;
+              toggleCombatMode();
             }
             else {
               getResponse("'You need a sword to spar!'");
