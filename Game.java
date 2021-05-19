@@ -3766,6 +3766,7 @@ public class Game implements ActionListener, KeyListener{
           }
           calmingDown = true;
           resetters.add(this);
+          toggleCombatMode();
           //damage is -1 to mark this as special; it doesn't hurt you as normal
           return -1;
         }
@@ -3778,6 +3779,7 @@ public class Game implements ActionListener, KeyListener{
             getResponse("'Well done!'");
             calmingDown = true;
             resetters.add(this);
+            toggleCombatMode();
           }
           else if (behavior == STAND && intention == MOVE){
             getResponse("'We haven't begun yet! Back up a bit.'");
