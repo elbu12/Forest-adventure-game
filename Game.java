@@ -1491,6 +1491,43 @@ public class Game implements ActionListener, KeyListener{
         siftDown(childi);
       }
     }
+    public void update(int i){
+      //This method finds node i and sifts it UP if necessary.
+      if (array.size() == 0){
+        //nothing to sift. Empty array.
+        return;
+      }
+      update(i, 0);
+    }
+    public boolean update(int i, int j){
+      //This method attempts to find node i and sifts it UP if necessary.
+      //It starts looking at index number j and then tries j's children
+      //Returns whether it found the desired node
+      if (array.get(j) == i){
+        //found it
+        siftUp(j);
+        return true;
+      }
+      else if (getValue(j) > distanceThrough.get(i)){
+        //Went too far; these nodes would be children of i
+        return false;
+      }
+      else {
+        if (j+j+1 < array.size()){
+          //try first child
+          if (update(i, j+j+1)){
+            //got it!
+            return true;
+          }
+        }
+        if (j+j+2 < array.size()){
+          //try second child
+          return update(1, j+j+2);
+        }
+        //made it this far. We did not find it.
+        return false;
+      }
+    }
     public void clear(){
       array.clear();
       set.clear();
@@ -1766,6 +1803,10 @@ public class Game implements ActionListener, KeyListener{
           //if neighbor is not in unevaluated, add it
           if (!unevaluated.contains(neighbor)){
             unevaluated.push(neighbor);
+          }
+          //if neighbor is already in unevaluated, we need to update with the new value
+          else {
+            unevaluated.update(neighbor);
           }
         }
       }
