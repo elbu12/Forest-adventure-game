@@ -455,7 +455,7 @@ public class Game implements ActionListener, KeyListener{
 		fillWithTrees(0,worldHeight-10,worldWidth,10, 0);
 
 		//Now make the "beginning area"
-		makeInitial7(10, 30, 40, 55, 70, 90, 110, 125, 150, 20);
+		makeInitial8(10, 30, 40, 55, 70, 90, 110, 125, 150, 20);
 
 		/**
     The walled village. The old woman refers to this as being to the northwest,
@@ -2516,7 +2516,7 @@ public class Game implements ActionListener, KeyListener{
 	}
 
 	/**
-  Makes the seven initial areas:
+  Makes the eight initial areas:
     Monster and bridge
     intermediate area
     Man with cabin
@@ -2524,12 +2524,13 @@ public class Game implements ActionListener, KeyListener{
     Corpse area
     intermediate area
     Woman with cabin
+    Single spider
 
   x-values refer to the edges of each area
   y is the top
   h is the height of the area
 	 **/
-	public void makeInitial7(int x0, int x1, int x2, int x3, int x4, int x5, int x6, int x7, int y, int h){
+	public void makeInitial8(int x0, int x1, int x2, int x3, int x4, int x5, int x6, int x7, int y, int h){
 		makeMonsterArea(x0, y, x1-x0, h);
 		makeIntermediateArea(x1, y, x2-x1, h, 2.4);
 		makeOldManArea(x2, y, x3-x2, h);
@@ -2537,6 +2538,7 @@ public class Game implements ActionListener, KeyListener{
 		makeCorpseArea(x4, y, x5-x4, h);
 		makeIntermediateArea(x5, y, x6-x5, h, 2);
 		makeOldWomanArea(x6, y, x7-x6, h);
+		makeSingleSpider(x7, y, (worldWidth-10)-x7, h);
 	}
 
 	//a convenient way to set tile types:
@@ -2671,7 +2673,8 @@ public class Game implements ActionListener, KeyListener{
 					getResponse("You search the body but find nothing else.");
 				}
 				else {
-					getResponse("You search the corpse and find a colorful piece of stone." +
+					getResponse("This corpse is so thin, it must have died of starvation.\n"
+							+ "You search it and find a colorful piece of stone." +
 							(knowAboutGoal ? "\nA shard of the Widow's Heart." : ""));
 					received = true;
 					shape = NULL;
@@ -2706,32 +2709,6 @@ public class Game implements ActionListener, KeyListener{
 		};
 		wamo.hiding = true;
 		wamo.setVisibilityArea(x, y, width, height);
-
-		class TrapSpider extends Spider{
-			//When you enter a specified "trap" area, this and its friends
-			//will all attack simultaneously
-			//the "trap" area is represented by the wx/wy/ww/wh variables
-			public TrapSpider(double x, double y, Solid target, double vx, double vy, double vw, double vh,
-					double wx, double wy, double ww, double wh){
-				super(target, x, y);
-				setVisibilityArea(vx, vy, vw, vh);
-				this.wx = wx;
-				this.wy = wy;
-				this.ww = ww;
-				this.wh = wh;
-				hiding = true;
-			}
-			protected boolean canDetect(Solid s){
-				//is the target within the "trap" area?
-				if (target.x >= wx && target.x < wx + ww && target.y >= wy && target.y < wy + wh){
-					return true;
-				}
-				else {
-					//no; are they within normal detection range?
-					return super.canDetect(s);
-				}
-			}
-		}
 
 		//make spiders
 		//first set: TrapSpiders
@@ -3653,6 +3630,17 @@ public class Game implements ActionListener, KeyListener{
 				tiles[i][j].canHaveTree = false;
 			}
 		}
+	}
+	
+	//This places a single spider with some trees.
+	//It gives you an opportunity to learn about spiders before
+	//get swarmed in the abandoned city
+	public void makeSingleSpider(int x, int y, int w, int h){
+		//place a spider somewhere in here, randomly
+		Spider spider = new Spider(player, x+1+(Math.random()*(w-2)), y+1+(Math.random()*(h-2)));
+		spider.hiding = true;
+		spider.setVisibilityArea(x, y, w, h);
+		fillWithTrees(x, y, w, h, 1.9);
 	}
 
 	public static void toggleCombatMode(){
