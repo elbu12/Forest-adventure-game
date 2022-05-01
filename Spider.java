@@ -23,9 +23,7 @@ public class Spider extends Navigator{
   }
   public Spider(Solid target, double x, double y){
     this(target);
-    if (place(x, y)){
-    }
-    else {
+    if (!place(x, y)){
       System.out.println("failed to place at "+x+", "+y);
     }
   }
