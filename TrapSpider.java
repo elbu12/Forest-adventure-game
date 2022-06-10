@@ -1,4 +1,7 @@
 public class TrapSpider extends Spider {
+
+	private static final long serialVersionUID = 1L;
+
 	// When you enter a specified "trap" area, this and its friends
 	// will all attack simultaneously
 	// the "trap" area is represented by the wx/wy/ww/wh variables
