@@ -1,0 +1,478 @@
+
+  /**
+  This creates a cult compound. The total area is ≤ 50x50
+    
+  "metCooks" refers to whether you have met the cooks in the kitchen.
+  "cultState" refers to the general state of the cult compound.
+  **/
+  boolean metCooks = false;
+  int cultState = 0; //base state
+  /**
+  Cult states:
+    0 - nothing
+    1 - trial just began
+    2 - you have been warned
+    3 - guards attack you; others flee
+    4 - leader dead
+  **/
+  
+  public void makeCultArea(int x, int y){
+    //set the whole area as forest floor. Some of that will then change.
+    setTileType(x, y, 50, 40, Tile.FOREST_FLOOR);
+    //make the cafeteria/kitchen
+    final int kx = x + 1; //x value of cafeteria corner
+    final int ky = y + 20; //y value of cafeteria corner
+    Wall.make(kx-0.3, ky-0.15, 8.75, 0, 0.3, 1.4);
+    Wall.make(kx+8.45, ky-0.15, 7.85, 0, 0.3, 0);
+    Wall.make(kx-0.3, ky+12.15, 16.6, 0, 0.3, 0);
+    Wall.make(kx-0.15, ky, 0, 12, 0.3, 0);
+    Wall.make(kx+16.15, ky, 0, 6, 0.3, 0);
+    Wall.make(kx+16.15, ky+6, 0, 6, 0.3, 2);
+    //walls separating kitchen and cafeteria
+    Wall.make(kx+8, ky+6, 0, 6, 0.3, 1.4);
+    Wall.make(kx, ky+5.85, 8.15, 0, 0.3, 1.4);
+    setTileType(kx, ky, 16, 12, Tile.STONE_FLOOR);
+    //pillars in cafeteria
+    new Pillar(0.7, kx+12, ky+6);
+    new Pillar(0.7, kx+8, ky+3);
+    //tables in cafeteria
+    new Table(kx + 11.5, ky + 3, 6, 2);
+    new Table(kx + 4.5, ky + 3, 6, 2);
+    new Table(kx + 12, ky + 8.5, 2, 4);
+    //kitchen objects
+    TableWithKnives tab = new TableWithKnives(kx + 4, ky+8.5, 5, 2);
+    tab.direction = Math.PI;
+    new Cauldron(kx+4, ky+11.5, 1);
+    //make the east-west homes
+    makeBuildingArea(kx+17, ky+13, 21, 7, false, true, 3, 5, 0);
+    //make the north-south homes
+    makeBuildingArea(kx+31, ky-2, 7, 14, true, false, 2, 5, 0);
+    //beds in homes
+    for (int i=0; i<3; i++){
+      new Bed(kx+19.85+(i*7), ky+18, 3.7, 2, Math.PI*1.5);
+    }
+    for (int i=0; i<2; i++){
+      new Bed(kx+36, ky+0.85+(i*7), 2, 3.7, 0);
+    }
+    //temple/bedchamber areas
+    Wall.make(x + 15, y, 0, 18, 0.3, 0); //west wall
+    Wall.make(x + 31, y, 0, 18, 0.3, 0); //east wall
+    Wall.make(x + 21, y, 0, 6, 0.3, 1.4); //bedroom wall
+    Wall.make(x + 21, y+6, 0, 6, 0.3, 1.4); //bedroom wall
+    Wall.make(x + 21, y+12, 0, 6, 0.3, 1.4); //bedroom wall
+    Wall.make(x+15.15, y+0.15, 5.7, 0, 0.3, 0); //bedroom wall
+    Wall.make(x+15.15, y+6.05, 5.7, 0, 0.3, 0); //bedroom wall
+    Wall.make(x+15.15, y+11.95, 5.7, 0, 0.3, 0); //bedroom wall
+    Wall.make(x+15.15, y+17.85, 5.7, 0, 0.3, 0); //bedroom wall
+    Wall.make(x + 21.15, y+0.15, 1.7, 0, 0.3, 0); //hallway end
+    Wall.make(x + 21.15, y+17.85, 1.7, 0, 0.3, 1.4); //hallway end
+    Wall.make(x + 23, y, 0, 6, 0.3, 1.4); //leader door
+    Wall.make(x + 23, y+6, 0, 12, 0.3, 1.4); //temple wall with door
+    Wall.make(x + 23.15, y+0.15, 7.7, 0, 0.3, 0); //north wall
+    Wall.make(x + 23.15, y+17.85, 7.7, 0, 0.3, 2); //temple main entrance
+    Wall.make(x + 23.15, y+5, 7.7, 0, 0.3, 0); //temple/leader bedroom divider
+    //beds in bedrooms
+    for (int i=0; i<3; i++){
+      new Bed(x+16.15, y+3 + (i*6), 2, 3.7, 0);
+    }
+    new Bed(x+29.85, y+2.15, 2, 3.7, Math.PI);
+    new TableWithShard(x+29.85, y+4.425, 2, 0.85);
+    //pillars in temple
+    new Pillar(0.7, x+25.5, y+9.3);
+    new Pillar(0.7, x+28.5, y+9.3);
+    new Pillar(0.7, x+25.5, y+13.5);
+    new Pillar(0.7, x+28.5, y+13.5);
+    setTileType(x+15, y, 16, 18, Tile.STONE_FLOOR);
+    //don't need trees in the central area
+    for (int i=16; i<31; i++){
+      for (int j=0; j<13; j++){
+        tiles[kx+i][ky+j].canHaveTree = false;
+      }
+    }
+    /**
+    Some of the cultists will flee from you. This list facilitates that. 
+    **/
+    final ArrayList <Solid> playerList = new ArrayList <Solid> (1);
+    playerList.add(player);
+    /**
+    If you choose to fight the cult guards, the leader will flee. You can find and challenge him.
+    He is initially found in the temple, preaching.
+    **/
+    class CultLeader extends Fencer{
+      boolean haveMet = false;
+      //teleported represents whether this has "teleported" to the trial
+      boolean teleported = false;
+      public CultLeader(double x, double y, double direction, double tx, double ty, double wx, double wy, double ww, double wh){
+        super(player);
+        place(x, y);
+        this.direction = direction;
+        images = Fencer.getBallAndStick(new Color(60, 0, 180));
+        behavior = STAND;
+        intention = STAND;
+        action = STAND;
+        //tx and ty refer to where he stands during the arrest & trial
+        this.tx = tx;
+        this.ty = ty;
+        //wx/wy/ww/wh refer to the area in which he will acknowledge you
+        this.wx = wx;
+        this.wy = wy;
+        this.ww = ww;
+        this.wh = wh;
+        setDetectionRange(4);
+      }
+      public ScaledImage draw(){
+        //if you enter the temple, he will greet you
+        if (!haveMet && player.x >= wx && player.x <= wx+ww && player.y >= wy && player.y <= wy+wh){
+          haveMet = true;
+          getResponse("You find a man preaching to a group. When he notices you, he pauses his sermon.\n" +
+                      "'Hello! Welcome to our temple! Please, feel free to stay and listen!'");
+        }
+        return super.draw();
+      }
+      public void interact(){
+        getResponse("The man continues preaching.");
+      }
+      public void hit(int damage){
+        if (cultState < 3){
+          getResponse("Do not yet kill this man. If you are eager to fight, talk to the cooks.");
+        }
+        else {
+          super.hit(damage);
+        }
+      }
+      public void die(){
+        getResponse("You slay the cult leader. Apparently the divine will was not enough.");
+        cultState = 4;
+        super.die();
+      }
+      public void act(){
+        if (cultState == 1){
+          /**
+          When the trial begins, the leader will "teleport" to the trial
+          He will remember his old location, and return when either you
+          leave or you kill a guard
+          **/
+          if (!teleported){
+            double ttx = x;
+            double tty = y;
+            if (moveIfCan(this, tx, ty)){
+              teleported = true;
+              direction = Math.PI;
+              haveMet = true;
+              tx = ttx;
+              ty = tty;
+            }
+          }
+        }
+        else if (cultState == 2){
+          direction = Angle.get(player.x - this.x, player.y - this.y);
+        }
+        else if (cultState == 3){
+          if (behavior != STAND_UNTIL_DETECT_THEN_ATTACK){
+            if (this.x != tx || this.y != ty){
+              navigateToward(tx, ty);
+              direction = Angle.get(nextNode.x - this.x, nextNode.y - this.y);
+            }
+            else {
+              behavior = STAND_UNTIL_DETECT_THEN_ATTACK;
+              direction = Math.PI;
+            }
+          }
+          else {
+            super.act();
+          }
+        }
+      }
+    }
+    final CultLeader leader = new CultLeader(x+27, y+7, Math.PI, x+28.5, y+24, x+23, y+5, 8, 8);
+    /**
+    The defector tries to leave with his family, but his wife snitches.
+    He is arrested, tried, and sentenced by the cult leader.
+    **/
+    class Defector extends Navigator{
+      protected BufferedImage image;
+      public Defector(double x, double y, double direction){
+        super(1, 1);
+        image = Fencer.getBallAndStick(Color.LIGHT_GRAY)[0];
+        this.x = x;
+        this.y = y;
+        this.direction = direction;
+        behavior = STAND;
+        intention = STAND;
+        action = STAND;
+        state = 0;
+        fastSpeed = 0.15;
+        slowSpeed = 0.07;
+        setDetectionRange(10);
+        speed = fastSpeed;
+        enemies = new ArrayList <Solid> (10);
+      }
+      public ScaledImage draw(){
+        if (cultState == 1 && Math.abs(this.x-player.x) < 5 && Math.abs(this.y-player.y) < 5){
+          //when you get close enough, you observe the argument
+          firstPartOfArgument();
+        }
+        return ScaledImage.get(image);
+      }
+      public void firstPartOfArgument(){
+        getResponse("You arrive to witness an argument between a villager and the village's\n" +
+                    "leader. Armed men surround each, guarding the leader and detaining the\n" +
+                    "other. A crowd has gathered.\n\n" +
+                    "Defector: You can't marry my daughter!\n\n" +
+                    "Leader: That's not your decision to make.\n\n" +
+                    "Defector: She's only fourteen!\n\n" +
+                    "Leader: And she will make a good wife.\n\n" +
+                    "Defector: You already have three!\n\n" +
+                    "Leader: It is a woman's greatest honor to bear the prophet's child.", 
+                    new DialogButton("Ok"){
+          public void press(){
+            nextPartOfArgument();
+          }
+        });
+      }
+      public void nextPartOfArgument(){
+        getResponse("The defector looks to the crowd.\n\n" +
+                    "Defector: Do you all see this? This has become a cult! This is crazy!\n\n" + 
+                    "Leader: Take him away.\n\n" + 
+                    "Defector: Someone help me!\n\n" +
+                    "The defector notices you. He expression is clearly pleading.\n\n" +
+                    "Leader (to you): You should leave. This does not concern you.\n\n" +
+                    "Defector: Help me!\n\n" +
+                    "Eyes are on you now.");
+        cultState = 2;
+      }
+      public void interact(){
+        getResponse("'Thank you for saving my life! But now I need to find my daughter!'");
+      }
+      public void hit(int damage){
+        getResponse("To talk to this person, press space when not in combat mode.");
+      }
+      public void act(){
+        if (cultState == 2){
+          direction = Angle.get(player.x - this.x, player.y - this.y);
+        }
+        else if (cultState > 2){
+          behavior = STAND_UNTIL_DETECT_THEN_FLEE;
+          super.act();
+          dieWhenFar(14);
+        }
+      }
+    }
+    final Defector defector = new Defector(x+28.5, y+28, 0);
+    //The guards appear for the trial
+    class CultGuard extends Fencer{
+      public CultGuard(double x, double y, double direction){
+        super(player);
+        this.x = x;
+        this.y = y;
+        this.direction = direction;
+        behavior = STAND;
+        setDetectionRange(04);
+        wx = x - 4;
+        wy = y - 4;
+        ww = 8;
+        wh = 8;
+        tx = x;
+        ty = y;
+      }
+      public void act(){
+        if (cultState == 2 && behavior != DEFEND_TERRITORY){
+          behavior = DEFEND_TERRITORY;
+        }
+        else if (cultState == 3 && behavior != STAND_UNTIL_DETECT_THEN_ATTACK){
+          behavior = STAND_UNTIL_DETECT_THEN_ATTACK;
+          intention = ATTACK;
+        }
+        else {
+          super.act();
+        }
+      }
+      public void die(){
+        if (cultState == 2){
+          cultState = 3;
+          getResponse("You kill one of the cultists. Then chaos erupts.");
+        }
+        super.die();
+      }
+    }
+    final ArrayList <CultGuard> cultGuards = new ArrayList <CultGuard> (10);
+    //guards around defector
+    cultGuards.add(new CultGuard(x+28.5, y+27, Math.PI));
+    cultGuards.add(new CultGuard(x+29.5, y+28, Math.PI*0.5));
+    cultGuards.add(new CultGuard(x+28.5, y+29, 0));
+    cultGuards.add(new CultGuard(x+27.5, y+28, Math.PI*1.5));
+    //guards around leader
+    cultGuards.add(new CultGuard(x+27.5, y+23, Math.PI));
+    cultGuards.add(new CultGuard(x+29.5, y+23, Math.PI));
+    cultGuards.add(new CultGuard(x+27.5, y+25, Math.PI));
+    cultGuards.add(new CultGuard(x+29.5, y+25, Math.PI));
+    for (CultGuard cg : cultGuards){
+      defector.enemies.add(cg);
+    }
+    /**
+    These cultists are found in the kitchen, cooking.
+    If you approach them, they will greet you.
+    If you talk to them, it will trigger the arrest of the cult defector.
+    **/
+    class CultCook extends Navigator{
+      protected BufferedImage image;
+      //walked represents whether they have walked to the trial
+      boolean walked = false;
+      public CultCook(double x, double y, double direction, double tx, double ty){
+        super(1, 1);
+        image = Fencer.getBallAndStick(new Color(90, 90, 30))[0];
+        this.tx = tx;
+        this.ty = ty;
+        place(x, y);
+        this.direction = direction;
+        behavior = STAND;
+        intention = STAND;
+        resetActions();
+        state = 0;
+        fastSpeed = 0.15;
+        slowSpeed = 0.07;
+        speed = fastSpeed;
+        enemies = playerList;
+        setDetectionRange(15);
+        pathFindingIterations = 150;
+      }
+      public ScaledImage draw(){
+        if (!metCooks && player.x > kx && player.x <= kx+8 && player.y >= ky + 5.85 && player.y < ky + 12){
+          //if you enter the kitchen, they will greet you
+          metCooks = true;
+          getResponse("You find some people cooking. They greet you and ask if you're looking for something.\n" +
+                      "You explain that you're simply exploring. They welcome you to their village and\n" +
+                      "suggest you meet their holy leader in the temple.");
+        }
+        return ScaledImage.get(image);
+      }
+      public void interact(){
+        //This triggers the trial!
+        if (cultState == 0){
+          Game.getResponse("You begin talking with the cook. Your conversation is interrupted by the sounds\n" +
+                           "of commotion outside. The cook gives you a bothered, but amused glance.\n" +
+                           "Whatever is happening, you'll get to see it.");
+          //stuff is happening now! The others will respond to this new cultState!
+          cultState = 1;
+          //the guards must be "summoned"
+          for (CultGuard cg : cultGuards){
+            cg.place(cg.x, cg.y);
+          }
+          //also, the defector must be summoned
+          defector.place(defector.x, defector.y);
+        }
+      }
+      public void hit(int damage){
+        getResponse("To talk to this person, press space when not in combat mode.");
+      }
+      public void act(){
+        if (cultState > 2){
+          if (behavior != STAND_UNTIL_DETECT_THEN_FLEE){
+            behavior = STAND_UNTIL_DETECT_THEN_FLEE;
+          }
+          if (cultState == 4){
+            dieWhenFar(14);
+          }
+          super.act();
+        }
+        else if (walked){
+          if (cultState == 2){
+            direction = Angle.get(player.x - this.x, player.y - this.y);
+          }
+        }
+        else {
+          if (cultState == 1 || cultState == 2){
+            if (this.x == tx && this.y == ty){
+              direction = Angle.get(leader.x - this.x, leader.y - this.y);
+              walked = true;
+            }
+            else{
+              navigateToward(tx, ty);
+              direction = Angle.get(nextNode.x - this.x, nextNode.y - this.y);
+            }
+          }
+        }
+      }
+    }
+
+    new CultCook(kx+3, ky+11.5, Math.PI*1.5, x+25, y+28);
+    new CultCook(kx+1, ky+8.5, Math.PI*1.5, x+24.4, y+26.9);
+    new CultCook(kx+2, ky+10, 0, x+23, y+25.1);
+    new CultCook(kx+2.5, ky+7, Math.PI, x+23, y+24);
+    /**
+    These regular cultists don't have much to say
+    **/
+    class Cultist extends Navigator{
+      protected BufferedImage image;
+      //walked represents whether they have walked to the trial
+      boolean walked = false;
+      public Cultist(double x, double y, double direction, double tx, double ty){
+        super(1, 1);
+        image = Fencer.getBallAndStick(new Color(0, 100, 0))[0];
+        this.tx = tx;
+        this.ty = ty;
+        place(x, y);
+        this.direction = direction;
+        behavior = STAND;
+        intention = STAND;
+        action = STAND;
+        state = 0;
+        fastSpeed = 0.15;
+        slowSpeed = 0.07;
+        speed = fastSpeed;
+        enemies = playerList;
+        setDetectionRange(15);
+      }
+      public ScaledImage draw(){
+        return ScaledImage.get(image);
+      }
+      public void interact(){
+        if (cultState == 0){
+          Game.getResponse("This person smiles at you politely, but does not interrupt the sermon.");
+        }
+      }
+      public void hit(int damage){
+        getResponse("To talk to this person, press space when not in combat mode.");
+      }
+      public void act(){
+        if ((cultState == 1 || cultState == 2) && !walked){
+          if (this.x == tx && this.y == ty){
+            direction = Angle.get(leader.x - this.x, leader.y - this.y);
+            walked = true;
+          }
+          else{
+            navigateToward(tx, ty);
+            direction = Angle.get(nextNode.x - this.x, nextNode.y - this.y);
+          }
+        }
+        else if (cultState > 2){
+          if (behavior != STAND_UNTIL_DETECT_THEN_FLEE){
+            behavior = STAND_UNTIL_DETECT_THEN_FLEE;
+          }
+          if (cultState == 4){
+            dieWhenFar(14);
+          }
+          super.act();
+        }
+      }
+    }
+    new Cultist(x+26.4, y+9, 0, x+30, y+21);
+    new Cultist(x+27.6, y+9, 0, x+28.9, y+21);
+    new Cultist(x+26.4, y+10.5, 0, x+27.8, y+21);
+    new Cultist(x+27.6, y+10.5, 0, x+26.7, y+21);
+    new Cultist(kx+26.85, ky+16.5, Math.PI, x+28, y+31){
+      public void interact(){
+        if (cultState == 0){
+          getResponse("You find someone cleaning a home. They tell you about their village, how\n" +
+                      "everyone has assigned tasks, and how their task today is cleaning. They\n" +
+                      "suggest you meet their holy leader in the temple.");
+        }
+      }
+    };
+    
+    new FirePit(x+25, y+25, 1.75){
+      public void interact(){
+        getResponse("A fire pit.");
+      }
+    };
+  }
