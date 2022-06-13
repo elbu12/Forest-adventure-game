@@ -2432,7 +2432,7 @@ public class Game implements ActionListener, KeyListener {
 		moveIfCan(shin, hx, hy);
 
 		// The man outside the cabin
-		Talker monsterMan = new Talker(hx, hy + 4, Math.PI, new Color(90, 90, 30), player);
+		Talker monsterMan = new MonsterMan(hx, hy + 4, Math.PI, new Color(90, 90, 30), player);
 		fillWithTrees(x, y, w, h, 2);
 	}
 
