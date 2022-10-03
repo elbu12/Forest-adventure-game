@@ -148,13 +148,16 @@ public class Player extends SolidActor {
 			double newx = x + dx;
 			double newy = y + dy;
 			if (Game.canMove(this, newx, newy)) {
+				Game.tutorialEvent(0);
 				moveTo(newx, newy, Game.intersectingTiles);
 			}
 		}
 		if (keys[KeyEvent.VK_D] && !keys[KeyEvent.VK_G]) {
+			Game.tutorialEvent(1);
 			direction = (direction + rotationSpeed) % tau;
 		}
 		if (keys[KeyEvent.VK_G] && !keys[KeyEvent.VK_D]) {
+			Game.tutorialEvent(1);
 			direction = (direction - rotationSpeed) % tau;
 		}
 

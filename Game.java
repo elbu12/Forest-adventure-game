@@ -152,6 +152,9 @@ public class Game implements ActionListener, KeyListener {
 	static JDialog dialog;
 	private static GridBagConstraints gbc = new GridBagConstraints();
 	private static JTextArea dialogText;
+	
+	//For tutorial dialog
+	private static DialogButton initialButton = null;
 
 	static double[][] circleCorners; // treats a circle like a polygon
 
@@ -278,6 +281,18 @@ public class Game implements ActionListener, KeyListener {
 			}
 		}
 	}
+	
+	//When the player performs the designated action, a tutorial event 
+	//is fired to tell the initial button to enable
+	public static void tutorialEvent(int i) {
+		if (tutorialState == null) {
+			return;
+		}
+		if (i == tutorialState[0]) {
+			initialButton.setEnabled(true);
+		}
+	}
+	private static int[] tutorialState = null;
 
 	public void playTutorial(GridBagConstraints gbc) {
 		// Creates the tutorial. The initialWindow/TextArea are reused for instructions.
@@ -305,8 +320,8 @@ public class Game implements ActionListener, KeyListener {
 			}
 		}
 		player.moveTo(worldWidth / 2, worldHeight / 2, getIntersectingTiles(player, worldWidth / 2, worldHeight / 2));
-		DialogButton initialButton = new DialogButton("Next") {
-			int[] tutorialState = new int[] { 0 };
+		tutorialState = new int[] { 0 };
+		initialButton = new DialogButton("Next") {
 			Monster tutorialMonster = new TutorialMonster(player, tutorialState);
 			Fencer tutorialFencer = new TutorialFencer(player, tutorialState);
 
@@ -316,11 +331,13 @@ public class Game implements ActionListener, KeyListener {
 				switch (tutorialState[0]) {
 				case 1:
 					initialTextArea.setText("Use 'd' and 'g' keys to turn. Use 'p' to pause or save.");
+					initialButton.setEnabled(false);
 					break;
 				case 2:
 					initialTextArea.setText(
 							"When not in combat mode, press space to interact with\nobjects and people. Try interacting with this monster.");
 
+					initialButton.setEnabled(false);
 					double tempy = (player.y < 10 ? player.y + 5 : player.y - 5);
 					tutorialMonster.place(player.x, tempy);
 					tutorialMonster.behavior = Navigator.STAND;
@@ -329,6 +346,7 @@ public class Game implements ActionListener, KeyListener {
 					globals.haveSword = true;
 					initialTextArea.setText(
 							"When you have the sword, press 'c' to enter combat mode.\nYou move faster in combat mode, but time slows down.");
+					initialButton.setEnabled(false);
 					break;
 				case 4:
 					initialTextArea.setText(
@@ -339,6 +357,7 @@ public class Game implements ActionListener, KeyListener {
 				case 5:
 					initialTextArea.setText(
 							"Here is another person. Try talking to them.\nRemember to press 'c' to toggle combat mode.");
+					initialButton.setEnabled(false);
 					tutorialMonster.die();
 					tutorialFencer.behavior = Navigator.STAND;
 					tempy = (player.y < 10 ? player.y + 5 : player.y - 5);
@@ -346,6 +365,7 @@ public class Game implements ActionListener, KeyListener {
 					break;
 				case 6:
 					initialTextArea.setText("Now attack this person.");
+					initialButton.setEnabled(false);
 					break;
 				case 7:
 					initialTextArea.setText(
@@ -382,7 +402,7 @@ public class Game implements ActionListener, KeyListener {
 						}
 					}
 					initialDialog.remove(this);
-					initialDialog.setVisible(false);
+					initialDialog.setVisible(false);	//do we need to repaint to fully remove this?
 					initialDialog.dispose();
 					globals.haveSword = false;
 					player.health = Player.maxHealth;
@@ -400,6 +420,8 @@ public class Game implements ActionListener, KeyListener {
 		// "press" the button, instead of having an in-game effect
 		initialButton.setFocusable(false);
 		gbc.gridy++;
+		//initialButton is only enabled when the user has performed the relevant action.
+		initialButton.setEnabled(false);
 		initialDialog.add(initialButton);
 		initialDialog.pack();
 		frame.requestFocus();
@@ -408,6 +430,8 @@ public class Game implements ActionListener, KeyListener {
 	}
 
 	public void makeRegularGame() {
+		//initialButton only for tutorial
+		initialButton = null;
 		/**
 		 * Make a 10-tile thick perimeter around the map. 5 blank tiles, then 5 of
 		 * forest floor, all full of trees.

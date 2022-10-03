@@ -11,6 +11,7 @@ public class TutorialFencer extends Fencer {
 
 	public void interact() {
 		Game.getResponse("'Hello.'");
+		Game.tutorialEvent(5);
 	}
 
 	public void die() {
@@ -19,6 +20,7 @@ public class TutorialFencer extends Fencer {
 		}
 		// Just relocate it
 		Game.resetters.add(this);
+		Game.tutorialEvent(6);
 	}
 
 	public void act() {
