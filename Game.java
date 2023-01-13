@@ -353,6 +353,7 @@ public class Game implements ActionListener, KeyListener {
 							"Now the monster will attack you. If you are hit and\nhave full health, your health bar on the right will diminish.\nNormally, if you are hit and do not have full health, you die.\nPress space while in combat mode to attack.");
 					tutorialMonster.behavior = Navigator.STAND_UNTIL_DETECT_THEN_ATTACK;
 					tutorialMonster.intention = SolidActor.ATTACK;
+					initialButton.setEnabled(false);
 					break;
 				case 5:
 					initialTextArea.setText(
@@ -3126,6 +3127,7 @@ public class Game implements ActionListener, KeyListener {
 	}
 
 	public static void toggleCombatMode() {
+		tutorialEvent(3);
 		player.toggleState();
 		player.walks = true;
 		timeSpeed = 1.5 - timeSpeed;
